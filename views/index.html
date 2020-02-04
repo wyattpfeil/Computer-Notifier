@@ -1,0 +1,100 @@
+<!-- This is a static file -->
+<!-- served from your routes in server.js -->
+
+<!-- You might want to try something fancier: -->
+<!-- html/nunjucks docs: https://mozilla.github.io/nunjucks/ -->
+<!-- pug: https://pugjs.org/ -->
+<!-- haml: http://haml.info/ -->
+<!DOCTYPE html>
+<html>
+  <audio id="Notification">
+    <source
+      src="https://cdn.glitch.com/7fca0e9a-1229-48e0-9857-f70ed55a1607%2Ftime-is-now.mp3?v=1579993688919"
+      type="audio/mpeg"
+    />
+  </audio>
+  <audio id="Speech">
+    <source
+      src="https://cdn.glitch.com/7fca0e9a-1229-48e0-9857-f70ed55a1607%2Fspeech_20200125232201015.mp3?v=1579994535248"
+      type="audio/mpeg"
+    />
+  </audio>
+  <audio id="FortniteOffSpeech">
+    <source
+      src="https://cdn.glitch.com/7fca0e9a-1229-48e0-9857-f70ed55a1607%2Fspeech_20200126000758694.mp3?v=1579997373783"
+      type="audio/mpeg"
+    />
+  </audio>
+  <audio id="FoodReadySpeech">
+    <source
+      src="https://cdn.glitch.com/7fca0e9a-1229-48e0-9857-f70ed55a1607%2Fspeech_20200126011300437.mp3?v=1580001194784"
+      type="audio/mpeg"
+    />
+  </audio>
+  <button id="PlayButton">Play</button>
+  <script>
+    function createSocket() {
+      var exampleSocket = new WebSocket("wss://computernotifier.glitch.me/");
+      function notifyMe(text) {
+        // Let's check if the browser supports notifications
+        if (!("Notification" in window)) {
+          alert("This browser does not support desktop notification");
+        }
+
+        // Let's check whether notification permissions have already been granted
+        else if (Notification.permission === "granted") {
+          // If it's okay let's create a notification
+          var notification = new Notification(text);
+        }
+
+        // Otherwise, we need to ask the user for permission
+        else if (Notification.permission !== "denied") {
+          Notification.requestPermission().then(function(permission) {
+            // If the user accepts, let's create a notification
+            if (permission === "granted") {
+              var notification = new Notification(text);
+            }
+          });
+        }
+        // At last, if the user has denied notifications, and you
+        // want to be respectful there is no need to bother them any more.
+      }
+      exampleSocket.onclose = function(event) {
+        console.log("Closed!");
+        createSocket();
+      };
+      exampleSocket.onopen = function(event) {
+        console.log("Opened!");
+        document.getElementById("PlayButton").onclick = function() {
+          exampleSocket.send("Play!");
+        };
+        exampleSocket.onmessage = function(event) {
+          if (event.data == "FortniteOff") {
+            document.getElementById("Notification").play();
+            notifyMe("Please get off Fortnite in 5 minutes.")
+            setTimeout(function() {
+              document.getElementById("FortniteOffSpeech").play();
+            }, 1500);
+          } else if (event.data.includes("Other")) {
+            var msg = event.data.split("|")[1];
+
+            notifyMe(msg);
+          } else if (event.data == "NotifyFood") {
+            document.getElementById("Notification").play();
+            notifyMe("Max, your food is ready.")
+            setTimeout(function() {
+              document.getElementById("FoodReadySpeech").play();
+            }, 1500);
+          } else {
+            document.getElementById("Notification").play();
+            notifyMe("Wyatt is coming in.")
+            setTimeout(function() {
+              document.getElementById("Speech").play();
+            }, 1500);
+          }
+        };
+      };
+    }
+    createSocket();
+  </script>
+</html>
